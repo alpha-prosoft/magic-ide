@@ -18,16 +18,20 @@ mkdir -p "$NVIM_CONFIG_DIR"
 echo "Linking configuration files..."
 
 # Link init.lua
-ln -sf "$SCRIPT_DIR/init.lua" "$NVIM_CONFIG_DIR/init.lua"
+ln -sf "$SCRIPT_DIR/lazyvim/init.lua" "$NVIM_CONFIG_DIR/init.lua"
 echo "✓ Linked init.lua"
 
 # Link .neoconf.json
-ln -sf "$SCRIPT_DIR/.neoconf.json" "$NVIM_CONFIG_DIR/.neoconf.json"
+ln -sf "$SCRIPT_DIR/lazyvim/.neoconf.json" "$NVIM_CONFIG_DIR/.neoconf.json"
 echo "✓ Linked .neoconf.json"
 
 # Link stylua.toml
-ln -sf "$SCRIPT_DIR/stylua.toml" "$NVIM_CONFIG_DIR/stylua.toml"
+ln -sf "$SCRIPT_DIR/lazyvim/stylua.toml" "$NVIM_CONFIG_DIR/stylua.toml"
 echo "✓ Linked stylua.toml"
+
+# Link lua directory
+ln -sfn "$SCRIPT_DIR/lazyvim/lua" "$NVIM_CONFIG_DIR/lua"
+echo "✓ Linked lua directory"
 
 # Link .tmux.conf
 ln -sf "$SCRIPT_DIR/.tmux.conf" "$HOME/.tmux.conf"
