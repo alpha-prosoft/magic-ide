@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LazyVim Cheatsheet</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f4f4f4;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #3498db;
+        }
+        
+        .columns {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+        
+        .section {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        h2 {
+            color: #34495e;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 5px;
+        }
+        
+        h3 {
+            color: #555;
+            margin: 10px 0;
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+        
+        .command-group {
+            margin-bottom: 15px;
+        }
+        
+        .command {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 10px;
+            margin: 5px 0;
+            background: white;
+            border-radius: 5px;
+            border-left: 3px solid #3498db;
+            transition: transform 0.2s;
+        }
+        
+        .command:hover {
+            transform: translateX(5px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .key {
+            font-family: 'Courier New', monospace;
+            background: #2c3e50;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+        
+        .desc {
+            color: #555;
+            font-size: 0.95em;
+            margin-left: 10px;
+            flex: 1;
+        }
+        
+        .leader {
+            background: #e74c3c;
+        }
+        
+        .note {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 20px;
+            font-size: 0.9em;
+        }
+        
+        .note strong {
+            color: #856404;
+        }
+        
+        @media print {
+            body {
+                padding: 10px;
+                background: white;
+            }
+            
+            .container {
+                box-shadow: none;
+                padding: 10px;
+            }
+            
+            .columns {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .section {
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+            
+            h1 {
+                font-size: 1.5em;
+                margin-bottom: 20px;
+            }
+            
+            h2 {
+                font-size: 1.1em;
+            }
+            
+            .command {
+                padding: 5px 8px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .columns {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 LazyVim Cheatsheet</h1>
+        
+        <div class="note">
+            <strong>Note:</strong> The leader key is <span class="key">Space</span> by default. 
+            Commands shown as <span class="key leader">&lt;leader&gt;</span> should be typed as <span class="key">Space</span> followed by the keys.
+        </div>
+        
+        <div class="columns">
+            <!-- Basic Navigation -->
+            <div class="section">
+                <h2>📝 Basic Navigation</h2>
+                <div class="command-group">
+                    <div class="command">
+                        <span class="key">h j k l</span>
+                        <span class="desc">Move left/down/up/right</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">w / b</span>
+                        <span class="desc">Next/previous word</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">0 / $</span>
+                        <span class="desc">Start/end of line</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">gg / G</span>
+                        <span class="desc">Start/end of file</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">Ctrl-d / Ctrl-u</span>
+                        <span class="desc">Half page down/up</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">Ctrl-f / Ctrl-b</span>
+                        <span class="desc">Full page down/up</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">%</span>
+                        <span class="desc">Jump to matching bracket</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Jump List & Navigation History -->
+            <div class="section">
+                <h2>🔙 Jump List & Navigation History</h2>
+                <div class="command-group">
+                    <h3>Jump Between Locations</h3>
+                    <div class="command">
+                        <span class="key">Ctrl-o</span>
+                        <span class="desc">Jump back (older position)</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">Ctrl-i</span>
+                        <span class="desc">Jump forward (newer position)</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">Tab</span>
+                        <span class="desc">Jump forward (same as Ctrl-i)</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">:jumps</span>
+                        <span class="desc">Show jump list</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">g;</span>
+                        <span class="desc">Go to older change position</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">g,</span>
+                        <span class="desc">Go to newer change position</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">:changes</span>
+                        <span class="desc">Show change list</span>
+                    </div>
+                </div>
+                <div class="command-group">
+                    <h3>Mark Navigation</h3>
+                    <div class="command">
+                        <span class="key">ma</span>
+                        <span class="desc">Set mark 'a' at cursor</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">'a</span>
+                        <span class="desc">Jump to line of mark 'a'</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">`a</span>
+                        <span class="desc">Jump to position of mark 'a'</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">''</span>
+                        <span class="desc">Jump back to last jump position</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">``</span>
+                        <span class="desc">Jump back to exact position</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">:marks</span>
+                        <span class="desc">List all marks</span>
+                    </div>
+                </div>
+                <div class="command-group">
+                    <h3>File Navigation History</h3>
+                    <div class="command">
+                        <span class="key">Ctrl-^</span>
+                        <span class="desc">Switch to alternate file</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">:e #</span>
+                        <span class="desc">Edit alternate file</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">g;</span>
+                        <span class="desc">Previous position in changelist</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">gi</span>
+                        <span class="desc">Go to last insert position</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- File Operations -->
+            <div class="section">
+                <h2>💾 File Operations</h2>
+                <div class="command-group">
+                    <div class="command">
+                        <span class="key">:w</span>
+                        <span class="desc">Save file</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">:q</span>
+                        <span class="desc">Quit</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">:wq</span>
+                        <span class="desc">Save and quit</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">:q!</span>
+                        <span class="desc">Quit without saving</span>
+                    </div>
+                    <div class="command">
+                        <span class="key leader">&lt;leader&gt;qq</span>
+                        <span class="desc">Quit all</span>
+                    </div>
+                    <div class="command">
+                        <span class="key leader">&lt;leader&gt;w</span>
+                        <span class="desc">Save file</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Neo-tree File Explorer -->
+            <div class="section">
+                <h2>🌳 Neo-tree File Explorer</h2>
+                <div class="command-group">
+                    <h3>Opening Neo-tree</h3>
+                    <div class="command">
+                        <span class="key leader">&lt;leader&gt;e</span>
+                        <span class="desc">Toggle explorer (current file)</span>
+                    </div>
+                    <div class="command">
+                        <span class="key leader">&lt;leader&gt;fe</span>
+                        <span class="desc">Explorer sidebar (current file)</span>
+                    </div>
+                    <div class="command">
+                        <span class="key leader">&lt;leader&gt;fE</span>
+                        <span class="desc">Explorer full window</span>
+                    </div>
+                    <div class="command">
+                        <span class="key leader">&lt;leader&gt;ge</span>
+                        <span class="desc">Git explorer</span>
+                    </div>
+                    <div class="command">
+                        <span class="key leader">&lt;leader&gt;be</span>
+                        <span class="desc">Buffer explorer</span>
+                    </div>
+                </div>
+                <div class="command-group">
+                    <h3>Inside Neo-tree</h3>
+                    <div class="command">
+                        <span class="key">?</span>
+                        <span class="desc">Show help</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">Enter / l</span>
+                        <span class="desc">Open file/folder</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">h</span>
+                        <span class="desc">Close folder</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">a</span>
+                        <span class="desc">Add file/folder (end with /)</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">d</span>
+                        <span class="desc">Delete</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">r</span>
+                        <span class="desc">Rename</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">y / x / p</span>
+                        <span class="desc">Copy/Cut/Paste</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">H</span>
+                        <span class="desc">Toggle hidden files</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">.</span>
+                        <span class="desc">Set root directory</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">/</span>
+                        <span class="desc">Filter/search</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- File Search -->
+            <div class="section">
+                <h2>🔍 File Search</h2>
+                <div class="command-group">
+                    <h3>Telescope</h3>
+                    <div class="command">
+                        <span class="key leader">&lt;leader&gt;ff</span>
+                        <span class="desc">Find files</span>
+                    </div>
+                    <div class="command">
+                        <span class="key leader">&lt;leader&gt;fr</span>
+                        <span class="desc">Recent files</span>
+                    </div>
+                    <div class="command">
+                        <span class="key leader">&lt;leader&gt;fg</span>
+                        <span class="desc">Find git files</span>
+                    </div>
+                    <div class="command">
+                        <span class="key leader">&lt;leader&gt;fb</span>
+                        <span class="desc">Buffers</span>
+                    </div>
+                    <div class="command">
+                        <span class="key leader">&lt;leader&gt;/</span>
+                        <span class="desc">Grep in files</span>
+                    </div>
+                    <div class="command">
+                        <span class="key leader">&lt;leader&gt;sg</span>
+                        <span class="desc">Live grep</span>
+                    </div>
+                    <div class="command">
+                        <span class="key leader">&lt;leader&gt;sw</span>
+                        <span class="desc">Search word under cursor</span>
+                    </div>
+                    <div class="command">
+                        <span class="key leader">&lt;leader&gt;sW</span>
+                        <span class="desc">Search WORD under cursor</span>
+                    </div>
+                </div>
+                <div class="command-group">
+                    <h3>fzf-lua (if using)</h3>
+                    <div class="command">
+                        <span class="key leader">&lt;leader&gt;ff</span>
+                        <span class="desc">Find files (fzf)</span>
+                    </div>
+                    <div class="command">
+                        <span class="key leader">&lt;leader&gt;sg</span>
+                        <span class="desc">Live grep (fzf)</span>
+                    </div>
+                    <div class="command">
+                        <span class="key leader">&lt;leader&gt;sr</span>
+                        <span class="desc">Resume last search</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- LSP Navigation -->
+            <div class="section">
+                <h2>🔧 LSP Navigation</h2>
+                <div class="command-group">
+                    <div class="command">
+                        <span class="key">gd</span>
+                        <span class="desc">Go to definition</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">gD</span>
+                        <span class="desc">Go to declaration</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">gi</span>
+                        <span class="desc">Go to implementation</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">gr</span>
+                        <span class="desc">Go to references</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">gy</span>
+                        <span class="desc">Go to type definition</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">K</span>
+                        <span class="desc">Hover documentation</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">gK</span>
+                        <span class="desc">Signature help</span>
+                    </div>
+                    <div class="command">
+                        <span class="key leader">&lt;leader&gt;ca</span>
+                        <span class="desc">Code actions</span>
+                    </div>
+                    <div class="command">
+                        <span class="key leader">&lt;leader&gt;cr</span>
+                        <span class="desc">Rename symbol</span>
+                    </div>
+                    <div class="command">
+                        <span class="key leader">&lt;leader&gt;cf</span>
+                        <span class="desc">Format document</span>
+                    </div>
+                </div>
+                <div class="command-group">
+                    <h3>Diagnostics</h3>
+                    <div class="command">
+                        <span class="key">]d</span>
+                        <span class="desc">Next diagnostic</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">[d</span>
+                        <span class="desc">Previous diagnostic</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">gl</span>
+                        <span class="desc">Line diagnostics</span>
+                    </div>
+                    <div class="command">
+                        <span class="key leader">&lt;leader&gt;cd</span>
+                        <span class="desc">Show diagnostics</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Git -->
+            <div class="section">
+                <h2>📦 Git Integration</h2>
+                <div class="command-group">
+                    <h3>Git Status & Files</h3>
+                    <div class="command">
+                        <span class="key leader">&lt;leader&gt;gg</span>
+                        <span class="desc">Lazygit (full UI)</span>
+                    </div>
+                    <div class="command">
+                        <span class="key leader">&lt;leader&gt;gs</span>
+                        <span class="desc">Git status</span>
+                    </div>
+                    <div class="command">
+                        <span class="key leader">&lt;leader&gt;gb</span>
+                        <span class="desc">Git branches</span>
+                    </div>
+                    <div class="command">
+                        <span class="key leader">&lt;leader&gt;gc</span>
+                        <span class="desc">Git commits</span>
+                    </div>
+                    <div class="command">
+                        <span class="key leader">&lt;leader&gt;gf</span>
+                        <span class="desc">Git files (changed)</span>
+                    </div>
+                </div>
+                <div class="command-group">
+                    <h3>Hunks Navigation</h3>
+                    <div class="command">
+                        <span class="key">]h</span>
+                        <span class="desc">Next hunk</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">[h</span>
+                        <span class="desc">Previous hunk</span>
+                    </div>
+                    <div class="command">
+                        <span class="key leader">&lt;leader&gt;ghs</span>
+                        <span class="desc">Stage hunk</span>
+                    </div>
+                    <div class="command">
+                        <span class="key leader">&lt;leader&gt;ghr</span>
+                        <span class="desc">Reset hunk</span>
+                    </div>
+                    <div class="command">
+                        <span class="key leader">&lt;leader&gt;ghp</span>
+                        <span class="desc">Preview hunk</span>
+                    </div>
+                    <div class="command">
+                        <span class="key leader">&lt;leader&gt;ghb</span>
+                        <span class="desc">Blame line</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Windows & Buffers -->
+            <div class="section">
+                <h2>🪟 Windows & Buffers</h2>
+                <div class="command-group">
+                    <h3>Window Management</h3>
+                    <div class="command">
+                        <span class="key">Ctrl-w s</span>
+                        <span class="desc">Split horizontally</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">Ctrl-w v</span>
+                        <span class="desc">Split vertically</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">Ctrl-w q</span>
+                        <span class="desc">Close window</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">Ctrl-h/j/k/l</span>
+                        <span class="desc">Navigate windows</span>
+                    </div>
+                    <div class="command">
+                        <span class="key leader">&lt;leader&gt;-</span>
+                        <span class="desc">Split below</span>
+                    </div>
+                    <div class="command">
+                        <span class="key leader">&lt;leader&gt;|</span>
+                        <span class="desc">Split right</span>
+                    </div>
+                </div>
+                <div class="command-group">
+                    <h3>Buffer Management</h3>
+                    <div class="command">
+                        <span class="key">[b / ]b</span>
+                        <span class="desc">Previous/Next buffer</span>
+                    </div>
+                    <div class="command">
+                        <span class="key leader">&lt;leader&gt;bd</span>
+                        <span class="desc">Delete buffer</span>
+                    </div>
+                    <div class="command">
+                        <span class="key leader">&lt;leader&gt;bb</span>
+                        <span class="desc">Switch buffer</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">H / L</span>
+                        <span class="desc">Previous/Next buffer</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Editing -->
+            <div class="section">
+                <h2>✏️ Editing</h2>
+                <div class="command-group">
+                    <h3>Basic Editing</h3>
+                    <div class="command">
+                        <span class="key">i / a</span>
+                        <span class="desc">Insert before/after cursor</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">I / A</span>
+                        <span class="desc">Insert at start/end of line</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">o / O</span>
+                        <span class="desc">New line below/above</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">x / X</span>
+                        <span class="desc">Delete char forward/backward</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">dd</span>
+                        <span class="desc">Delete line</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">yy</span>
+                        <span class="desc">Yank (copy) line</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">p / P</span>
+                        <span class="desc">Paste after/before</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">u / Ctrl-r</span>
+                        <span class="desc">Undo/Redo</span>
+                    </div>
+                </div>
+                <div class="command-group">
+                    <h3>Visual Mode</h3>
+                    <div class="command">
+                        <span class="key">v</span>
+                        <span class="desc">Visual mode</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">V</span>
+                        <span class="desc">Visual line mode</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">Ctrl-v</span>
+                        <span class="desc">Visual block mode</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">&gt; / &lt;</span>
+                        <span class="desc">Indent/Unindent</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">gv</span>
+                        <span class="desc">Reselect last visual</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Terminal -->
+            <div class="section">
+                <h2>💻 Terminal</h2>
+                <div class="command-group">
+                    <div class="command">
+                        <span class="key leader">&lt;leader&gt;ft</span>
+                        <span class="desc">Terminal (root)</span>
+                    </div>
+                    <div class="command">
+                        <span class="key leader">&lt;leader&gt;fT</span>
+                        <span class="desc">Terminal (cwd)</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">Ctrl-/</span>
+                        <span class="desc">Toggle terminal</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">Ctrl-_</span>
+                        <span class="desc">Terminal in new tab</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">Esc Esc</span>
+                        <span class="desc">Exit terminal mode</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Search & Replace -->
+            <div class="section">
+                <h2>🔄 Search & Replace</h2>
+                <div class="command-group">
+                    <div class="command">
+                        <span class="key">/</span>
+                        <span class="desc">Search forward</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">?</span>
+                        <span class="desc">Search backward</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">n / N</span>
+                        <span class="desc">Next/Previous match</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">*</span>
+                        <span class="desc">Search word under cursor</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">:noh</span>
+                        <span class="desc">Clear search highlights</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">:%s/old/new/g</span>
+                        <span class="desc">Replace all in file</span>
+                    </div>
+                    <div class="command">
+                        <span class="key leader">&lt;leader&gt;sr</span>
+                        <span class="desc">Search and replace (UI)</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Useful Extras -->
+            <div class="section">
+                <h2>⚡ Useful Extras</h2>
+                <div class="command-group">
+                    <h3>Quick Actions</h3>
+                    <div class="command">
+                        <span class="key leader">&lt;leader&gt;l</span>
+                        <span class="desc">Lazy (plugin manager)</span>
+                    </div>
+                    <div class="command">
+                        <span class="key leader">&lt;leader&gt;cm</span>
+                        <span class="desc">Mason (LSP installer)</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">gcc</span>
+                        <span class="desc">Toggle comment line</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">gc</span>
+                        <span class="desc">Comment in visual mode</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">za</span>
+                        <span class="desc">Toggle fold</span>
+                    </div>
+                    <div class="command">
+                        <span class="key">zR / zM</span>
+                        <span class="desc">Open/Close all folds</span>
+                    </div>
+                    <div class="command">
+                        <span class="key leader">&lt;leader&gt;uf</span>
+                        <span class="desc">Toggle format on save</span>
+                    </div>
+                    <div class="command">
+                        <span class="key leader">&lt;leader&gt;us</span>
+                        <span class="desc">Toggle spell check</span>
+                    </div>
+                    <div class="command">
+                        <span class="key leader">&lt;leader&gt;uw</span>
+                        <span class="desc">Toggle word wrap</span>
+                    </div>
+                    <div class="command">
+                        <span class="key leader">&lt;leader&gt;ul</span>
+                        <span class="desc">Toggle line numbers</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="note" style="margin-top: 30px;">
+            <strong>Tips:</strong>
+            <ul style="margin-left: 20px; margin-top: 10px;">
+                <li>Press <span class="key">:checkhealth</span> to verify your Neovim setup</li>
+                <li>Press <span class="key leader">&lt;leader&gt;sk</span> to search all keymaps</li>
+                <li>Press <span class="key leader">&lt;leader&gt;sh</span> to search help docs</li>
+                <li>Most commands can be prefixed with a number for repetition (e.g., <span class="key">5dd</span> deletes 5 lines)</li>
+                <li>Use <span class="key">.</span> to repeat the last command</li>
+                <li>In fzf/telescope windows: <span class="key">Ctrl-x</span> split, <span class="key">Ctrl-v</span> vsplit, <span class="key">Ctrl-t</span> new tab</li>
+                <li><span class="key">Ctrl-o</span> and <span class="key">Ctrl-i</span> are your best friends for navigating back and forward through your jump history!</li>
+                <li>Vim automatically adds to the jump list when you: search, use G/gg, jump to marks, or jump to definitions</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
