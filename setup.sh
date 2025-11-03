@@ -92,6 +92,66 @@ else
     echo "✓ Tmux auto-start already configured"
 fi
 
+# Add tmux window naming configuration
+echo "Configuring tmux window naming..."
+
+# Function to add tmux integration to a shell RC file
+add_tmux_integration() {
+    local RC_FILE="$1"
+    local SHELL_NAME="$2"
+    
+    if [ ! -f "$RC_FILE" ]; then
+        return 1
+    fi
+    
+    # Define the start and end markers for tmux shell integration
+    local TMUX_INTEGRATION_START_MARKER="# START TMUX SHELL INTEGRATION - DO NOT EDIT THIS LINE"
+    local TMUX_INTEGRATION_END_MARKER="# END TMUX SHELL INTEGRATION - DO NOT EDIT THIS LINE"
+    
+    # Remove existing tmux shell integration block if it exists
+    if grep -q "$TMUX_INTEGRATION_START_MARKER" "$RC_FILE" 2>/dev/null; then
+        # Create a temporary file
+        TEMP_FILE=$(mktemp)
+        
+        # Remove the block between markers
+        awk "/$TMUX_INTEGRATION_START_MARKER/,/$TMUX_INTEGRATION_END_MARKER/{next} {print}" "$RC_FILE" > "$TEMP_FILE"
+        
+        # Replace the original file
+        mv "$TEMP_FILE" "$RC_FILE"
+        echo "✓ Removed existing tmux shell integration from $SHELL_NAME"
+    fi
+    
+    # Add the new tmux shell integration source
+    local TMUX_INTEGRATION_CONFIG="
+$TMUX_INTEGRATION_START_MARKER
+# Tmux shell integration for automatic window naming based on first pane's directory
+# This ensures window names update when navigating in any pane
+if [ -f \"$SCRIPT_DIR/tmux-shell-integration.sh\" ]; then
+    source \"$SCRIPT_DIR/tmux-shell-integration.sh\"
+fi
+$TMUX_INTEGRATION_END_MARKER"
+    
+    # Append the configuration to RC file
+    echo "$TMUX_INTEGRATION_CONFIG" >> "$RC_FILE"
+    echo "✓ Added tmux shell integration to $SHELL_NAME"
+    return 0
+}
+
+# Add to .bashrc
+add_tmux_integration "$BASHRC" ".bashrc"
+
+# Also add to .zshrc if it exists
+ZSHRC="$HOME/.zshrc"
+if [ -f "$ZSHRC" ]; then
+    add_tmux_integration "$ZSHRC" ".zshrc"
+fi
+
+# Make the helper scripts executable
+chmod +x "$SCRIPT_DIR/update-tmux-window-name.sh" 2>/dev/null
+chmod +x "$SCRIPT_DIR/tmux-shell-integration.sh" 2>/dev/null
+chmod +x "$SCRIPT_DIR/test-tmux-naming.sh" 2>/dev/null
+echo "✓ Made tmux helper scripts executable"
+
 echo "================================================"
 echo "Setup complete!"
 echo "================================================"
@@ -99,11 +159,17 @@ echo ""
 echo "Configuration files have been linked to ~/.config/nvim/"
 echo "Bash aliases have been added to ~/.bashrc"
 echo "Tmux will auto-start in new terminals"
+echo "Tmux window naming will update based on first pane's directory"
 echo ""
 echo "Next steps:"
-echo "1. Reload your shell: source ~/.bashrc or open a new terminal"
+echo "1. Reload your shell: source ~/.bashrc (or ~/.zshrc) or open a new terminal"
 echo "2. Tmux will start automatically"
 echo "3. Install tmux plugins: Press Ctrl+b then Shift+I"
 echo "4. Open nvim and let LazyVim install plugins"
+echo ""
+echo "Tmux window naming features:"
+echo "- Window names update to match the first pane's directory basename"
+echo "- Navigation in any pane triggers updates based on first pane's location"
+echo "- Test with: $SCRIPT_DIR/test-tmux-naming.sh (run inside tmux)"
 echo ""
 echo "See README.md for detailed instructions"
