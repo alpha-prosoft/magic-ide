@@ -15,13 +15,15 @@ echo "First pane's path basename: $(tmux display-message -p -t '#{window_id}.0' 
 
 echo ""
 echo "Triggering window name update..."
-/home/pofuk/magic-ide/update-tmux-window-name.sh
+# Get the directory where this script is located
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+"$SCRIPT_DIR/update-tmux-window-name.sh"
 
 echo "Updated window name: $(tmux display-message -p -F '#{window_name}')"
 
 echo ""
 echo "To fully test the configuration:"
 echo "1. Reload tmux config: tmux source-file ~/.tmux.conf"
-echo "2. Add to your shell RC file: source /home/pofuk/magic-ide/tmux-shell-integration.sh"
+echo "2. Add to your shell RC file: source $SCRIPT_DIR/tmux-shell-integration.sh"
 echo "3. Restart your shell or source your RC file"
 echo "4. Navigate to different directories and observe window name changes"
