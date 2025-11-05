@@ -8,7 +8,7 @@ return {
     "mfussenegger/nvim-jdtls",
     dependencies = {
       "folke/which-key.nvim",
-      "williamboman/mason.nvim",
+      "mason-org/mason.nvim",
     },
   },
 
@@ -32,7 +32,7 @@ return {
 
   -- Ensure Java-related tools are installed via Mason
   {
-    "williamboman/mason.nvim",
+    "mason-org/mason.nvim",
     opts = function(_, opts)
       opts.ensure_installed = opts.ensure_installed or {}
       vim.list_extend(opts.ensure_installed, {
@@ -60,7 +60,7 @@ return {
     "mfussenegger/nvim-dap",
     optional = true,
     dependencies = {
-      "williamboman/mason.nvim",
+      "mason-org/mason.nvim",
       opts = function(_, opts)
         opts.ensure_installed = opts.ensure_installed or {}
         vim.list_extend(opts.ensure_installed, {
