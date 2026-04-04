@@ -1,175 +1,68 @@
 #!/bin/bash
+set -euo pipefail
 
-set -e
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+NVIM_CONFIG_DIR="${HOME}/.config/nvim"
 
-echo "================================================"
-echo "Setting up LazyVim Configuration"
-echo "================================================"
+echo "=== Setting up Magic IDE ==="
 
-# Get the directory where this script is located
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-NVIM_CONFIG_DIR="$HOME/.config/nvim"
+# Export MAGIC_IDE_HOME for tmux hooks and other scripts
+export MAGIC_IDE_HOME="$SCRIPT_DIR"
 
-# Create neovim config directory if it doesn't exist
-echo "Creating Neovim config directory..."
+# --- Neovim config ---
+echo "Linking Neovim configuration..."
 mkdir -p "$NVIM_CONFIG_DIR"
 
-# Link configuration files
-echo "Linking configuration files..."
-
-# Link init.lua
-ln -sf "$SCRIPT_DIR/lazyvim/init.lua" "$NVIM_CONFIG_DIR/init.lua"
-echo "✓ Linked init.lua"
-
-# Link .neoconf.json
+ln -sf "$SCRIPT_DIR/lazyvim/init.lua"      "$NVIM_CONFIG_DIR/init.lua"
 ln -sf "$SCRIPT_DIR/lazyvim/.neoconf.json" "$NVIM_CONFIG_DIR/.neoconf.json"
-echo "✓ Linked .neoconf.json"
-
-# Link stylua.toml
-ln -sf "$SCRIPT_DIR/lazyvim/stylua.toml" "$NVIM_CONFIG_DIR/stylua.toml"
-echo "✓ Linked stylua.toml"
+ln -sf "$SCRIPT_DIR/lazyvim/stylua.toml"   "$NVIM_CONFIG_DIR/stylua.toml"
 
 # Link lua directory
+if [ -d "$NVIM_CONFIG_DIR/lua" ] && [ ! -L "$NVIM_CONFIG_DIR/lua" ]; then
+  mv "$NVIM_CONFIG_DIR/lua" "$NVIM_CONFIG_DIR/lua.bak.$(date +%s)"
+fi
 ln -sfn "$SCRIPT_DIR/lazyvim/lua" "$NVIM_CONFIG_DIR/lua"
-echo "✓ Linked lua directory"
 
-# Link .tmux.conf
+# --- Tmux config ---
+echo "Linking tmux configuration..."
 ln -sf "$SCRIPT_DIR/.tmux.conf" "$HOME/.tmux.conf"
-echo "✓ Linked .tmux.conf"
 
-# Setup bash aliases
-echo "Configuring bash aliases..."
-BASHRC="$HOME/.bashrc"
+# Make scripts executable
+chmod +x "$SCRIPT_DIR"/scripts/*.sh 2>/dev/null || true
 
-# Check if .bashrc exists, create if it doesn't
-if [ ! -f "$BASHRC" ]; then
-    touch "$BASHRC"
-    echo "✓ Created .bashrc file"
+# --- Shell integration ---
+echo "Configuring shell integration..."
+for RC_FILE in "$HOME/.bashrc" "$HOME/.zshrc"; do
+  [ -f "$RC_FILE" ] || continue
+
+  MARKER="# MAGIC-IDE-CONFIG"
+
+  # Remove old block if present
+  if grep -q "$MARKER" "$RC_FILE" 2>/dev/null; then
+    sed -i "/${MARKER}-START/,/${MARKER}-END/d" "$RC_FILE"
+  fi
+
+  # Also remove legacy markers
+  if grep -q "# START TMUX SHELL INTEGRATION - DO NOT EDIT THIS LINE" "$RC_FILE" 2>/dev/null; then
+    sed -i '/# START TMUX SHELL INTEGRATION/,/# END TMUX SHELL INTEGRATION/d' "$RC_FILE"
+  fi
+
+  cat >> "$RC_FILE" << EOF
+${MARKER}-START
+export MAGIC_IDE_HOME="$SCRIPT_DIR"
+alias vim='nvim'
+alias vi='nvim'
+if command -v tmux &>/dev/null && [ -z "\$TMUX" ]; then
+  exec tmux new-session
 fi
-
-# Function to add alias if it doesn't exist
-add_alias_if_missing() {
-    local alias_name="$1"
-    local alias_command="$2"
-    local alias_line="alias $alias_name='$alias_command'"
-
-    # Check if the alias already exists
-    if ! grep -q "alias $alias_name=" "$BASHRC" 2>/dev/null; then
-        echo "$alias_line" >> "$BASHRC"
-        echo "✓ Added alias: $alias_name -> $alias_command"
-        return 0
-    else
-        # Check if it points to the correct command
-        if grep -q "^alias $alias_name='$alias_command'" "$BASHRC" 2>/dev/null || \
-           grep -q "^alias $alias_name=\"$alias_command\"" "$BASHRC" 2>/dev/null; then
-            echo "✓ Alias $alias_name already configured correctly"
-            return 0
-        else
-            echo "⚠ Alias $alias_name exists but points to a different command"
-            echo "  Please check your .bashrc manually"
-            return 1
-        fi
-    fi
-}
-
-# Add vim and vi aliases
-add_alias_if_missing "vim" "nvim"
-add_alias_if_missing "vi" "nvim"
-
-# Add tmux auto-start to .bashrc (always create new session)
-echo "Configuring tmux auto-start..."
-TMUX_AUTOSTART="
-# Auto-start tmux - creates new session for each terminal
-if command -v tmux &> /dev/null && [ -z \"\$TMUX\" ]; then
-    exec tmux new-session
-fi"
-
-# Check if tmux auto-start already exists
-if ! grep -q "Auto-start tmux - creates new session for each terminal" "$BASHRC" 2>/dev/null; then
-    echo "$TMUX_AUTOSTART" >> "$BASHRC"
-    echo "✓ Added tmux auto-start to .bashrc"
-else
-    echo "✓ Tmux auto-start already configured"
+if [ -f "\$MAGIC_IDE_HOME/scripts/tmux-shell-integration.sh" ]; then
+  source "\$MAGIC_IDE_HOME/scripts/tmux-shell-integration.sh"
 fi
+${MARKER}-END
+EOF
+  echo "Updated $(basename "$RC_FILE")"
+done
 
-# Add tmux window naming configuration
-echo "Configuring tmux window naming..."
-
-# Function to add tmux integration to a shell RC file
-add_tmux_integration() {
-    local RC_FILE="$1"
-    local SHELL_NAME="$2"
-    
-    if [ ! -f "$RC_FILE" ]; then
-        return 1
-    fi
-    
-    # Define the start and end markers for tmux shell integration
-    local TMUX_INTEGRATION_START_MARKER="# START TMUX SHELL INTEGRATION - DO NOT EDIT THIS LINE"
-    local TMUX_INTEGRATION_END_MARKER="# END TMUX SHELL INTEGRATION - DO NOT EDIT THIS LINE"
-    
-    # Remove existing tmux shell integration block if it exists
-    if grep -q "$TMUX_INTEGRATION_START_MARKER" "$RC_FILE" 2>/dev/null; then
-        # Create a temporary file
-        TEMP_FILE=$(mktemp)
-        
-        # Remove the block between markers
-        awk "/$TMUX_INTEGRATION_START_MARKER/,/$TMUX_INTEGRATION_END_MARKER/{next} {print}" "$RC_FILE" > "$TEMP_FILE"
-        
-        # Replace the original file
-        mv "$TEMP_FILE" "$RC_FILE"
-        echo "✓ Removed existing tmux shell integration from $SHELL_NAME"
-    fi
-    
-    # Add the new tmux shell integration source
-    local TMUX_INTEGRATION_CONFIG="
-$TMUX_INTEGRATION_START_MARKER
-# Tmux shell integration for automatic window naming based on first pane's directory
-# This ensures window names update when navigating in any pane
-if [ -f \"$SCRIPT_DIR/tmux-shell-integration.sh\" ]; then
-    source \"$SCRIPT_DIR/tmux-shell-integration.sh\"
-fi
-$TMUX_INTEGRATION_END_MARKER"
-    
-    # Append the configuration to RC file
-    echo "$TMUX_INTEGRATION_CONFIG" >> "$RC_FILE"
-    echo "✓ Added tmux shell integration to $SHELL_NAME"
-    return 0
-}
-
-# Add to .bashrc
-add_tmux_integration "$BASHRC" ".bashrc"
-
-# Also add to .zshrc if it exists
-ZSHRC="$HOME/.zshrc"
-if [ -f "$ZSHRC" ]; then
-    add_tmux_integration "$ZSHRC" ".zshrc"
-fi
-
-# Make the helper scripts executable
-chmod +x "$SCRIPT_DIR/update-tmux-window-name.sh" 2>/dev/null
-chmod +x "$SCRIPT_DIR/tmux-shell-integration.sh" 2>/dev/null
-chmod +x "$SCRIPT_DIR/test-tmux-naming.sh" 2>/dev/null
-echo "✓ Made tmux helper scripts executable"
-
-echo "================================================"
-echo "Setup complete!"
-echo "================================================"
-echo ""
-echo "Configuration files have been linked to ~/.config/nvim/"
-echo "Bash aliases have been added to ~/.bashrc"
-echo "Tmux will auto-start in new terminals"
-echo "Tmux window naming will update based on first pane's directory"
-echo ""
-echo "Next steps:"
-echo "1. Reload your shell: source ~/.bashrc (or ~/.zshrc) or open a new terminal"
-echo "2. Tmux will start automatically"
-echo "3. Install tmux plugins: Press Ctrl+b then Shift+I"
-echo "4. Open nvim and let LazyVim install plugins"
-echo ""
-echo "Tmux window naming features:"
-echo "- Window names update to match the first pane's directory basename"
-echo "- Navigation in any pane triggers updates based on first pane's location"
-echo "- Test with: $SCRIPT_DIR/test-tmux-naming.sh (run inside tmux)"
-echo ""
-echo "See README.md for detailed instructions"
+echo "=== Setup complete ==="
+echo "Reload your shell or open a new terminal."
+echo "In tmux, press Ctrl+b then Shift+I to install tmux plugins."

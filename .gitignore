@@ -1,0 +1,21 @@
+# Neovim
+lazyvim/lazy-lock.json
+lazyvim/.luarc.json
+
+# Tmux
+*.tmux.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Build artifacts
+*.tar.gz
+*.zip

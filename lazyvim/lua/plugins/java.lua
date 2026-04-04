@@ -1,8 +1,5 @@
 -- Java LSP configuration for LazyVim
 return {
-  -- Import LazyVim's Java language extras
-  { import = "lazyvim.plugins.extras.lang.java" },
-
   -- nvim-jdtls for enhanced Java support
   {
     "mfussenegger/nvim-jdtls",

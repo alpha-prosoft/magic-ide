@@ -1,0 +1,21 @@
+{
+  "name": "Magic IDE",
+  "build": {
+    "dockerfile": "../Dockerfile",
+    "context": ".."
+  },
+  "remoteUser": "dev",
+  "containerEnv": {
+    "MAGIC_IDE_HOME": "/opt/magic-ide"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": []
+    }
+  },
+  "postCreateCommand": "nvim --headless '+Lazy! sync' +qa 2>/dev/null || true",
+  "mounts": [
+    "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached"
+  ],
+  "workspaceFolder": "/workspace"
+}
