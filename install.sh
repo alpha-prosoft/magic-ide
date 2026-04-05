@@ -1,15 +1,24 @@
 #!/bin/bash
 set -euo pipefail
 
-# install.sh — Set up the host machine for Magic IDE.
-# Installs tmux, DevPod CLI, links tmux config, adds shell integration.
+# install.sh — Set up the host machine for Magic IDE (Linux).
+# Installs Docker, tmux, DevPod CLI, links tmux config, adds shell integration.
 # Neovim runs inside the DevPod container — nothing else needed on the host.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ARCH="$(uname -m)"
-OS="$(uname -s)"
 
 echo "=== Magic IDE — Host Setup ==="
+
+# --- Docker Engine ---
+if ! command -v docker &>/dev/null; then
+  echo "Installing Docker Engine..."
+  curl -fsSL https://get.docker.com | sudo sh
+  sudo usermod -aG docker "$USER"
+  echo "Docker installed. You may need to log out and back in for group membership to take effect."
+else
+  echo "Docker already installed: $(docker --version)"
+fi
 
 # --- tmux ---
 if ! command -v tmux &>/dev/null; then
@@ -17,8 +26,6 @@ if ! command -v tmux &>/dev/null; then
   if command -v apt-get &>/dev/null; then
     sudo apt-get update -qq
     sudo apt-get install -y --no-install-recommends tmux git curl unzip
-  elif command -v brew &>/dev/null; then
-    brew install tmux git curl
   elif command -v dnf &>/dev/null; then
     sudo dnf install -y tmux git curl unzip
   elif command -v pacman &>/dev/null; then
@@ -34,12 +41,10 @@ fi
 # --- DevPod CLI ---
 if ! command -v devpod &>/dev/null; then
   echo "Installing DevPod CLI..."
-  case "${OS}-${ARCH}" in
-    Linux-x86_64)   DEVPOD_BIN="devpod-linux-amd64" ;;
-    Linux-aarch64)   DEVPOD_BIN="devpod-linux-arm64" ;;
-    Darwin-arm64)    DEVPOD_BIN="devpod-darwin-arm64" ;;
-    Darwin-x86_64)   DEVPOD_BIN="devpod-darwin-amd64" ;;
-    *) echo "ERROR: Unsupported platform: ${OS}-${ARCH}"; exit 1 ;;
+  case "${ARCH}" in
+    x86_64)   DEVPOD_BIN="devpod-linux-amd64" ;;
+    aarch64)  DEVPOD_BIN="devpod-linux-arm64" ;;
+    *) echo "ERROR: Unsupported architecture: ${ARCH}"; exit 1 ;;
   esac
   curl -fsSL -o /tmp/devpod "https://github.com/loft-sh/devpod/releases/latest/download/${DEVPOD_BIN}"
   sudo install -c -m 0755 /tmp/devpod /usr/local/bin/devpod
