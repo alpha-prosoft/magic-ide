@@ -110,6 +110,9 @@ fi
 if [ -f "\$MAGIC_IDE_HOME/scripts/tmux-shell-integration.sh" ]; then
   source "\$MAGIC_IDE_HOME/scripts/tmux-shell-integration.sh"
 fi
+dvi() {
+  devpod up github.com/alpha-prosoft/magic-ide --ide none && devpod ssh magic-ide --command nvim
+}
 ${MARKER}-END
 EOF
   echo "  Updated $(basename "$RC_FILE")"

@@ -67,5 +67,11 @@ RUN { \
 # Pre-install lazy.nvim and plugins (headless)
 RUN nvim --headless "+Lazy! sync" +qa 2>/dev/null || true
 
+# Pre-install treesitter parsers so they don't compile on first launch
+# Includes LazyVim defaults + custom (java)
+RUN nvim --headless \
+    "+TSInstallSync bash c diff html javascript jsdoc json jsonc lua luadoc luap markdown markdown_inline printf python query regex toml tsx typescript vim vimdoc xml yaml java" \
+    +qa 2>/dev/null || true
+
 WORKDIR /workspace
 CMD ["nvim"]
