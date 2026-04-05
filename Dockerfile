@@ -1,7 +1,6 @@
 FROM ubuntu:24.04
 
 ARG NVIM_VERSION=0.12.0
-ARG NERD_FONT_VERSION=3.1.1
 ARG TARGETARCH
 
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -10,18 +9,16 @@ ENV DEBIAN_FRONTEND=noninteractive \
     MAGIC_IDE_HOME=/opt/magic-ide \
     PATH="/opt/nvim/bin:${PATH}"
 
-# System packages
+# System packages (no tmux — that runs on the host)
 RUN apt-get update -qq && \
     apt-get install -y --no-install-recommends \
       git curl wget unzip ca-certificates \
-      tmux \
       ripgrep fzf fd-find \
       nodejs npm \
       python3 python3-pip python3-venv \
       build-essential cmake \
-      fontconfig \
       sudo \
-      bash zsh \
+      bash \
       openssh-client && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
@@ -50,44 +47,25 @@ RUN userdel -r ubuntu 2>/dev/null || true && \
 USER $USERNAME
 WORKDIR /home/$USERNAME
 
-# Nerd Font
-RUN mkdir -p ~/.local/share/fonts/JetBrainsMono && \
-    curl -fsSL "https://github.com/ryanoasis/nerd-fonts/releases/download/v${NERD_FONT_VERSION}/JetBrainsMono.zip" \
-      -o /tmp/JetBrainsMono.zip && \
-    unzip -qo /tmp/JetBrainsMono.zip -d ~/.local/share/fonts/JetBrainsMono && \
-    rm /tmp/JetBrainsMono.zip && \
-    fc-cache -f 2>/dev/null || true
-
-# TPM (Tmux Plugin Manager)
-RUN git clone --depth 1 https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
-
 # Copy magic-ide configuration
 COPY --chown=$USERNAME:$USERNAME . $MAGIC_IDE_HOME/
 
-# Link configs
+# Link Neovim config
 RUN mkdir -p ~/.config/nvim && \
     ln -sf $MAGIC_IDE_HOME/lazyvim/init.lua      ~/.config/nvim/init.lua && \
     ln -sf $MAGIC_IDE_HOME/lazyvim/.neoconf.json  ~/.config/nvim/.neoconf.json && \
     ln -sf $MAGIC_IDE_HOME/lazyvim/stylua.toml    ~/.config/nvim/stylua.toml && \
-    ln -sfn $MAGIC_IDE_HOME/lazyvim/lua           ~/.config/nvim/lua && \
-    ln -sf $MAGIC_IDE_HOME/.tmux.conf             ~/.tmux.conf && \
-    chmod +x $MAGIC_IDE_HOME/scripts/*.sh
+    ln -sfn $MAGIC_IDE_HOME/lazyvim/lua           ~/.config/nvim/lua
 
-# Shell integration
+# Shell aliases
 RUN { \
-      echo '# MAGIC-IDE-CONFIG-START'; \
-      echo "export MAGIC_IDE_HOME=\"$MAGIC_IDE_HOME\""; \
       echo 'export PATH="/opt/nvim/bin:$PATH"'; \
       echo "alias vim='nvim'"; \
       echo "alias vi='nvim'"; \
-      echo 'if [ -f "$MAGIC_IDE_HOME/scripts/tmux-shell-integration.sh" ]; then'; \
-      echo '  source "$MAGIC_IDE_HOME/scripts/tmux-shell-integration.sh"'; \
-      echo 'fi'; \
-      echo '# MAGIC-IDE-CONFIG-END'; \
     } >> ~/.bashrc
 
 # Pre-install lazy.nvim and plugins (headless)
 RUN nvim --headless "+Lazy! sync" +qa 2>/dev/null || true
 
 WORKDIR /workspace
-CMD ["bash"]
+CMD ["nvim"]

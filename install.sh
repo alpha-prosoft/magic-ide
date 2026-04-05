@@ -1,68 +1,121 @@
 #!/bin/bash
 set -euo pipefail
 
-NVIM_VERSION="${NVIM_VERSION:-0.12.0}"
-NERD_FONT_VERSION="${NERD_FONT_VERSION:-3.1.1}"
-ARCH="${ARCH:-$(uname -m)}"
+# install.sh — Set up the host machine for Magic IDE.
+# Installs tmux, DevPod CLI, links tmux config, adds shell integration.
+# Neovim runs inside the DevPod container — nothing else needed on the host.
 
-case "$ARCH" in
-  x86_64)  NVIM_ARCH="linux-x86_64" ;;
-  aarch64) NVIM_ARCH="linux-arm64" ;;
-  *)       echo "Unsupported architecture: $ARCH"; exit 1 ;;
-esac
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ARCH="$(uname -m)"
+OS="$(uname -s)"
 
-echo "=== Installing Magic IDE dependencies ==="
+echo "=== Magic IDE — Host Setup ==="
 
-# Core packages
-echo "Installing system packages..."
-sudo apt-get update -qq
-sudo apt-get install -y --no-install-recommends \
-  git curl wget unzip \
-  tmux \
-  ripgrep fzf fd-find \
-  nodejs npm \
-  python3 python3-pip \
-  build-essential
-
-# Neovim from GitHub release
-echo "Installing Neovim ${NVIM_VERSION}..."
-if ! command -v nvim &>/dev/null || [[ "$(nvim --version | head -1)" != *"${NVIM_VERSION}"* ]]; then
-  curl -fsSL "https://github.com/neovim/neovim/releases/download/v${NVIM_VERSION}/nvim-${NVIM_ARCH}.tar.gz" \
-    -o /tmp/nvim.tar.gz
-  sudo rm -rf /opt/nvim
-  sudo tar xzf /tmp/nvim.tar.gz -C /opt/
-  sudo mv "/opt/nvim-${NVIM_ARCH}" /opt/nvim
-  sudo ln -sf /opt/nvim/bin/nvim /usr/local/bin/nvim
-  rm /tmp/nvim.tar.gz
-  echo "Neovim ${NVIM_VERSION} installed"
+# --- tmux ---
+if ! command -v tmux &>/dev/null; then
+  echo "Installing tmux..."
+  if command -v apt-get &>/dev/null; then
+    sudo apt-get update -qq
+    sudo apt-get install -y --no-install-recommends tmux git curl unzip
+  elif command -v brew &>/dev/null; then
+    brew install tmux git curl
+  elif command -v dnf &>/dev/null; then
+    sudo dnf install -y tmux git curl unzip
+  elif command -v pacman &>/dev/null; then
+    sudo pacman -S --noconfirm tmux git curl unzip
+  else
+    echo "ERROR: Could not detect package manager. Install tmux manually."
+    exit 1
+  fi
 else
-  echo "Neovim ${NVIM_VERSION} already installed"
+  echo "tmux already installed: $(tmux -V)"
 fi
 
-# TPM (Tmux Plugin Manager)
-echo "Installing TPM..."
+# --- DevPod CLI ---
+if ! command -v devpod &>/dev/null; then
+  echo "Installing DevPod CLI..."
+  case "${OS}-${ARCH}" in
+    Linux-x86_64)   DEVPOD_BIN="devpod-linux-amd64" ;;
+    Linux-aarch64)   DEVPOD_BIN="devpod-linux-arm64" ;;
+    Darwin-arm64)    DEVPOD_BIN="devpod-darwin-arm64" ;;
+    Darwin-x86_64)   DEVPOD_BIN="devpod-darwin-amd64" ;;
+    *) echo "ERROR: Unsupported platform: ${OS}-${ARCH}"; exit 1 ;;
+  esac
+  curl -fsSL -o /tmp/devpod "https://github.com/loft-sh/devpod/releases/latest/download/${DEVPOD_BIN}"
+  sudo install -c -m 0755 /tmp/devpod /usr/local/bin/devpod
+  rm -f /tmp/devpod
+  echo "DevPod CLI installed"
+else
+  echo "DevPod CLI already installed: $(devpod version 2>/dev/null || echo 'unknown version')"
+fi
+
+# --- Docker provider ---
+if command -v docker &>/dev/null; then
+  if ! devpod provider list 2>/dev/null | grep -q docker; then
+    echo "Adding Docker provider to DevPod..."
+    devpod provider add docker
+  else
+    echo "DevPod Docker provider already configured"
+  fi
+else
+  echo "WARNING: Docker not found. Install Docker and then run: devpod provider add docker"
+fi
+
+# --- TPM (Tmux Plugin Manager) ---
 TPM_DIR="${HOME}/.tmux/plugins/tpm"
 if [ ! -d "$TPM_DIR" ]; then
+  echo "Installing TPM..."
   git clone --depth 1 https://github.com/tmux-plugins/tpm "$TPM_DIR"
-  echo "TPM installed"
 else
   echo "TPM already installed"
 fi
 
-# Nerd Font
-echo "Installing JetBrainsMono Nerd Font..."
-FONT_DIR="${HOME}/.local/share/fonts/JetBrainsMono"
-if [ ! -d "$FONT_DIR" ]; then
-  mkdir -p "$FONT_DIR"
-  curl -fsSL "https://github.com/ryanoasis/nerd-fonts/releases/download/v${NERD_FONT_VERSION}/JetBrainsMono.zip" \
-    -o /tmp/JetBrainsMono.zip
-  unzip -qo /tmp/JetBrainsMono.zip -d "$FONT_DIR"
-  rm /tmp/JetBrainsMono.zip
-  fc-cache -f 2>/dev/null || true
-  echo "Nerd Font installed"
-else
-  echo "Nerd Font already installed"
-fi
+# --- Link tmux config ---
+echo "Linking .tmux.conf..."
+ln -sf "$SCRIPT_DIR/.tmux.conf" "$HOME/.tmux.conf"
 
-echo "=== Installation complete ==="
-echo "Run ./setup.sh to link configuration files"
+# --- Make scripts executable ---
+chmod +x "$SCRIPT_DIR"/scripts/*.sh 2>/dev/null || true
+
+# --- Shell integration ---
+echo "Configuring shell integration..."
+export MAGIC_IDE_HOME="$SCRIPT_DIR"
+
+for RC_FILE in "$HOME/.bashrc" "$HOME/.zshrc"; do
+  [ -f "$RC_FILE" ] || continue
+
+  MARKER="# MAGIC-IDE-CONFIG"
+
+  # Remove old block if present
+  if grep -q "$MARKER" "$RC_FILE" 2>/dev/null; then
+    sed -i.bak "/${MARKER}-START/,/${MARKER}-END/d" "$RC_FILE" && rm -f "${RC_FILE}.bak"
+  fi
+
+  # Remove legacy markers
+  if grep -q "# START TMUX SHELL INTEGRATION - DO NOT EDIT THIS LINE" "$RC_FILE" 2>/dev/null; then
+    sed -i.bak '/# START TMUX SHELL INTEGRATION/,/# END TMUX SHELL INTEGRATION/d' "$RC_FILE" && rm -f "${RC_FILE}.bak"
+  fi
+
+  cat >> "$RC_FILE" << EOF
+${MARKER}-START
+export MAGIC_IDE_HOME="$SCRIPT_DIR"
+if command -v tmux &>/dev/null && [ -z "\$TMUX" ]; then
+  exec tmux new-session
+fi
+if [ -f "\$MAGIC_IDE_HOME/scripts/tmux-shell-integration.sh" ]; then
+  source "\$MAGIC_IDE_HOME/scripts/tmux-shell-integration.sh"
+fi
+${MARKER}-END
+EOF
+  echo "  Updated $(basename "$RC_FILE")"
+done
+
+echo ""
+echo "=== Setup complete ==="
+echo ""
+echo "Next steps:"
+echo "  1. Restart your shell (or run: source ~/.bashrc)"
+echo "  2. Inside tmux, press Ctrl+b Shift+I to install tmux plugins"
+echo "  3. Start Neovim in a container:"
+echo "     devpod up github.com/alpha-prosoft/magic-ide --ide none"
+echo "     devpod ssh magic-ide"
